@@ -58,9 +58,10 @@ jobs:
         run: |
           echo "${{ contains(github.ref_name, 'dev') }}"
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         # if: "!startsWith(github.ref_name, 'v-test-')"
         with:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'dev') }}
           body: "https://pypi.org/project/viur-shop/${{ github.ref_name }}/"
+          append_body: true
