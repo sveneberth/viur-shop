@@ -112,10 +112,25 @@ class Price:
         article_price = self.retail or 0.0  # FIXME(discuss): how to handle None prices?
         if not article_price:
             return None
+        context_kwargs = {
+            "article_skel": self.article_skel,
+        }
+        if self.is_in_cart:
+            context_kwargs |= {
+                "cart_key": SHOP_INSTANCE.get().cart.current_session_cart_key,  # FIXME: context might be a wishlist
+            }
+        # else:
+        #     context_kwargs = {
+        #         "article_skel": self.article_skel,
+        #     }
+
         discount_module: "Discount" = SHOP_INSTANCE.get().discount
         for skel in SHOP_INSTANCE.get().discount.current_automatically_discounts:
             applicable, dv = discount_module.can_apply(
-                skel, article_skel=article_skel,
+                skel,
+                **context_kwargs,
+                # article_skel=article_skel,
+                # cart_key=SHOP_INSTANCE.get().cart.current_session_cart_key,  # FIXME: context might be a wishlist
                 context=DiscountValidationContext.AUTOMATICALLY_LIVE
             )
             # logger.debug(f"{dv=}")
@@ -247,7 +262,7 @@ class Price:
         # logger.debug(f"Called get_or_create with {src_object = }")
         try:
             cls.cache[src_object["key"]]
-            logger.debug(f'Price.get_or_create() hit cache for {src_object["key"]}')
+            logger.debug(f'Price.get_or_create() hit cache for {src_object["key"]!r}')
             return cls.cache[src_object["key"]]
         except KeyError:
             pass

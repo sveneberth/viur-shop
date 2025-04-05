@@ -281,16 +281,46 @@ class ScopeCode(DiscountConditionScope):
 
 @ConditionValidator.register
 class ScopeMinimumOrderValue(DiscountConditionScope):
+    # TODO: Don't we build a loop with this?
+
     def precondition(self) -> bool:
+        logger.debug(f"{current.request_data.get().get("shop_cart_total_lookahead_exclude") = }")
+        logger.debug(f"{self.condition_skel["scope_minimum_order_value"] = }")
+        logger.debug(f"{self.article_skel is None = }")
+        logger.debug(f"{self.cart_skel is None = }")
+        logger.debug(f"{bool(self.article_skel) = }")
+        logger.debug(f"{bool(self.cart_skel) = }")
         return (
             self.condition_skel["scope_minimum_order_value"] is not None
-            and self.cart_skel is not None
+            and not (self.article_skel is None and self.cart_skel is None)  # needs a context to verify
         )
 
     def __call__(self) -> bool:
-        return (
-            self.condition_skel["scope_minimum_order_value"] <= self.cart_skel["total"]
-        )
+        if self.article_skel["key"] in current.request_data.get().setdefault("shop_cart_total_lookahead_exclude", []):
+            return False
+
+        if self.cart_skel is not None:
+            # current.request_data.get().setdefault("shop_cart_total_lookahead_exclude", set()).add(self.article_skel["key"])
+            current.request_data.get().setdefault("shop_cart_total_lookahead_exclude", []).append(self.article_skel["key"])
+            logger.debug(f"\n+++ START TOTAL LOOKAHEAD for {self.article_skel["key"]!r} +++ \n")
+            try:
+                value = self.cart_skel["total"]
+            finally:
+                logger.debug(f"\n+++ END TOTAL LOOKAHEAD for {self.article_skel["key"]!r} +++ \n")
+                # current.request_data.get().setdefault("shop_cart_total_lookahead_exclude", set()).remove(
+                #     self.article_skel["key"]
+                # )
+                current.request_data.get().setdefault("shop_cart_total_lookahead_exclude", []).remove(
+                    self.article_skel["key"]
+                )
+
+        elif self.article_skel is not None:
+            # value = self.article_skel.shop_price_.retail
+            value = self.article_skel["shop_price_retail"]
+        else:
+            raise NotImplementedError("Need cart_skel or article_skel")
+
+        return self.condition_skel["scope_minimum_order_value"] <= value
 
 
 @ConditionValidator.register

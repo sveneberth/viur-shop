@@ -211,6 +211,8 @@ class Discount(ShopModuleAbstract, List):
             # Use a buffer to make sure we write it on-block
             buffer = io.StringIO()
             print(f'Checking {skel["key"]!r} {skel["name"]}', file=buffer)
+            print(f'  with cart: {cart is not None}', file=buffer)
+            print(f'  with article: {article_skel is not None}', file=buffer)
             for cv in dv.condition_validator_instances:
                 code = f"{'+' if cv.is_fulfilled else '-'}"
                 print(f'  {code} {dv.__class__.__name__} : '
