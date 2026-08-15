@@ -15,8 +15,15 @@ logger = SHOP_LOGGER.getChild(__name__)
 
 
 class UnzerOpenbankingPis(UnzerAbstract):
-    """
-    Unzer Open Banking PIS (Payment Initiation Service) (Direct Bank Transfer) payment method integration for the ViUR Shop.
+    """Unzer Direct Bank Transfer (Open Banking PIS) for the ViUR Shop.
+
+    Pay-by-bank based on a payment initiation service: the customer is redirected to
+    log into their own online banking and authorizes the transfer there. Available in
+    Germany and Austria in EUR, and replaces Sofort.
+
+    The charge is not settled when the customer returns -- the transfer takes one up
+    to seven business days to arrive. Until then the order remains unpaid and the
+    payment is flagged as pending, see :meth:`return_handler`.
     """
 
     name: t.Final[str] = "unzer-openbanking_pis"
