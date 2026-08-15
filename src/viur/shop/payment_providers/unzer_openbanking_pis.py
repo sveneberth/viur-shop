@@ -33,7 +33,7 @@ class UnzerOpenbankingPis(UnzerAbstract):
         order_skel: SkeletonInstance,
     ) -> PaymentType:
         type_id = order_skel["payment"]["payments"][-1]["type_id"]
-        return unzer.DirectBankTransfer(key=type_id)
+        return unzer.OpenbankingPis(key=type_id)
 
     def get_pending_payment_ids(
         self,
