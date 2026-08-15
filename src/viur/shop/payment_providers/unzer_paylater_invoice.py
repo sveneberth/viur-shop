@@ -110,9 +110,7 @@ class UnzerPaylaterInvoice(UnzerAbstract):
 
     def get_payment_request(self, order_skel: SkeletonInstance) -> unzer.PaymentRequest:
         customer = self.get_customer(order_skel)
-        host = current.request.get().request.host_url
-        return_url = (f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler'
-                      f'?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}')
+        return_url = self.get_return_url(order_skel)
         return unzer.PaymentRequest(
             self.get_payment_type(order_skel),
             amount=order_skel["total"],

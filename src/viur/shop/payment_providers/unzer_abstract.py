@@ -175,8 +175,7 @@ class UnzerAbstract(PaymentProviderAbstract):
         customer = self.client.createOrUpdateCustomer(customer)
         logger.debug(f"{customer = } [RESPONSE]")
 
-        host = current.request.get().request.host_url
-        return_url = f'{host.rstrip("/")}/{self.modulePath.strip("/")}/return_handler?order_key={order_skel["key"].to_legacy_urlsafe().decode("ASCII")}'
+        return_url = self.get_return_url(order_skel)
         unzer_session = current.session.get()["unzer"] = {
             "customer_id": customer.key,
         }
