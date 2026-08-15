@@ -9,10 +9,10 @@ from unzer.model.base import BaseModel
 from unzer.model.customer import Salutation as UnzerSalutation
 from unzer.model.payment import PaymentState
 from unzer.model.webhook import Events, IP_ADDRESS
-from viur.core import access, current, db, errors, exposed, force_post
-from viur.core.skeleton import SkeletonInstance
 
 from viur import toolkit
+from viur.core import access, current, db, errors, exposed, force_post
+from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from . import PaymentProviderAbstract
@@ -56,6 +56,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
         public_key: str | t.Callable[[], str],
         sandbox: bool | t.Callable[[], bool] = False,
         language: str = "en",
+        client_ip: str = None,
     ):
         # completely overwritten to keep properties
         super(unzer.UnzerClient, self).__init__()
@@ -63,6 +64,7 @@ class UnzerClientViURShop(unzer.UnzerClient):
         self._public_key = public_key
         self._sandbox = sandbox
         self.language = language
+        self.client_ip = client_ip
 
     @property
     def private_key(self) -> str:
