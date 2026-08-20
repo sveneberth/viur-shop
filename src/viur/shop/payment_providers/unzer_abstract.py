@@ -752,8 +752,10 @@ class UnzerAbstract(PaymentProviderAbstract):
             if none is configured.
         """
         try:
-            country = node_skel["shipping_address"]["dest"]["country"]
-        except (KeyError, TypeError):
+            # The referenced skeleton carries its own renderPreparation, which would
+            # turn the select bone's value into a wrapper object instead of the code.
+            country = toolkit.without_render_preparation(node_skel["shipping_address"]["dest"])["country"]
+        except (AttributeError, KeyError, TypeError):
             country = None
         try:
             return self.shop.vat_rate.get_vat_rate_for_country(
