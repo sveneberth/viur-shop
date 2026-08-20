@@ -60,7 +60,7 @@ class UnzerPaylaterInstallment(UnzerAbstract):
         order_skel = OrderSkel.refresh_billing_address(order_skel)
         errs = super().can_order(order_skel)
         if not order_skel["billing_address"] or not order_skel["billing_address"]["dest"]["birthdate"]:
-            errs.append(ClientError("billing_address has no birthday set"))
+            errs.append(ClientError("billing_address has no birthdate set"))
         return errs
 
     @log_unzer_error
