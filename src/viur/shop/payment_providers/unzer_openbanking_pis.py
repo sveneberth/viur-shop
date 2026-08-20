@@ -32,6 +32,11 @@ class UnzerOpenbankingPis(UnzerAbstract):
         self,
         order_skel: SkeletonInstance,
     ) -> PaymentType:
+        """Build the payment type from the resource the frontend created.
+
+        :param order_skel: OrderSkel holding the payment attempt.
+        :return: The direct bank transfer payment type to charge.
+        """
         type_id = order_skel["payment"]["payments"][-1]["type_id"]
         return unzer.OpenbankingPis(key=type_id)
 

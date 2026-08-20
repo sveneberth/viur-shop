@@ -134,6 +134,19 @@ TRANSLATIONS = {
         "de": "Flexibel bezahlen mit Klarna",
         "fr": "Paiement flexible avec Klarna",
     },
+    "viur.shop.payment_provider.unzer-paylater_installment": {
+        "_hint": "viur-shop payment provider: unzer-paylater_installment",
+        "_default_text": "Installment via Unzer",
+        "en": "Installment via Unzer",
+        "de": "Ratenkauf über Unzer",
+        "fr": "Paiement en plusieurs fois via Unzer",
+    },
+    "viur.shop.payment_provider.unzer-paylater_installment.descr": {
+        "_default_text": "Pay in monthly rates",
+        "en": "Pay in monthly rates",
+        "de": "In monatlichen Raten bezahlen",
+        "fr": "Payer en mensualités",
+    },
     "viur.shop.payment_provider.unzer-openbanking_pis": {
         "_hint": "viur-shop payment provider: unzer-openbanking_pis",
         "_default_text": "Direct bank transfer via Unzer",
