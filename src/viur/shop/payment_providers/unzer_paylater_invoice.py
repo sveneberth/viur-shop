@@ -1,4 +1,3 @@
-import functools
 import typing as t  # noqa
 
 import unzer
@@ -10,7 +9,7 @@ from viur.core.skeleton import SkeletonInstance
 from viur.shop.skeletons import OrderSkel
 from viur.shop.types import *
 from .unzer_abstract import UnzerAbstract, log_unzer_error
-from ..globals import MAX_FETCH_LIMIT, SHOP_LOGGER
+from ..globals import SHOP_LOGGER
 
 logger = SHOP_LOGGER.getChild(__name__)
 
@@ -101,13 +100,6 @@ class UnzerPaylaterInvoice(UnzerAbstract):
         logger.debug(f"{payment=} [charge response]")
         return order_skel, payment
 
-    def get_customer(self, order_skel: SkeletonInstance) -> unzer.Customer:
-        customer = self.customer_from_order_skel(order_skel)
-        logger.debug(f"{customer=}")
-        customer = self.client.createOrUpdateCustomer(customer)
-        logger.debug(f"{customer=} [RESPONSE]")
-        return customer
-
     def get_payment_request(self, order_skel: SkeletonInstance) -> unzer.PaymentRequest:
         customer = self.get_customer(order_skel)
         return_url = self.get_return_url(order_skel)
@@ -123,24 +115,6 @@ class UnzerPaylaterInvoice(UnzerAbstract):
                 risk_data=self.get_risk_data(order_skel),
             )
         )
-
-    def get_risk_data(self, order_skel: SkeletonInstance) -> unzer.RiskData:
-        risk_data = unzer.RiskData(
-            registrationLevel=(unzer.RegistrationLevel.GUEST if order_skel["customer"] is None
-                               else unzer.RegistrationLevel.REGISTERED),
-            customerGroup=unzer.CustomerGroup.NEUTRAL
-        )
-        if order_skel["customer"] is not None:
-            risk_data.registrationDate = order_skel["customer"]["dest"]["creationdate"]
-            orders = (
-                self.shop.order.skel(bones=("is_paid", "total")).all()
-                .filter("customer.dest.__key__ =", order_skel["customer"]["dest"]["key"])
-                .filter("is_paid =", True)
-                .fetch(MAX_FETCH_LIMIT)
-            )
-            risk_data.confirmedOrders = len(orders)
-            risk_data.confirmedAmount = functools.reduce(lambda total, skel: total + skel["total"], orders, 0)
-        return risk_data
 
     @exposed
     @log_unzer_error
