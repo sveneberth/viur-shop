@@ -4,6 +4,7 @@ from google.protobuf.message import DecodeError
 
 import viur.shop.types.exceptions as e
 from viur.core import current, db, errors, exposed, force_post
+from viur.core.i18n import translate
 from viur.core.render.json.default import DefaultRender as JsonRenderer
 from viur.shop.modules.abstract import ShopModuleAbstract
 from viur.shop.skeletons import ShippingSkel
@@ -529,6 +530,75 @@ class Api(ShopModuleAbstract):
         """
         cart_key = self._normalize_external_key(cart_key, "cart_key")
         return JsonResponse(self.shop.shipping.get_shipping_skels_for_cart(cart_key=cart_key))
+
+    # --- Notifications -------------------------------------------------------
+
+    def add_notification(
+        self,
+        code: str,
+        message: translate,
+        **details: t.Any,
+    ) -> None:
+        """
+        Queue a message for the customer of the current session.
+
+        Meant for changes the shop made on its own, which the customer would otherwise
+        only notice by a different total -- e.g. a discount dropped from the basket.
+        The queue is picked up and emptied by :meth:`notifications`.
+
+        :param code: Stable identifier of the kind of message, e.g. ``discount.no_longer_valid``.
+            Lets a frontend decide how to show it without parsing the text.
+        :param message: The text for the customer. It is stored as translation key and
+            variables and translated when picked up, in the language of that request.
+        :param details: JSON serializable details for the frontend.
+        """
+        if (session := self.session) is None:
+            return
+        entry = {
+            "code": code,
+            "message": {
+                "key": message.key,
+                "default_text": message.defaultText,
+                "variables": message.default_variables,
+            },
+            "details": details,
+        }
+        queue = session.setdefault("notifications", [])
+        if entry not in queue:  # e.g. the same discount dropped from two nodes
+            queue.append(entry)
+        current.session.get().markChanged()
+
+    @exposed
+    @force_post
+    def notifications(self) -> JsonResponse[dict[str, list[dict[str, t.Any]]]]:
+        """
+        Pick up the messages queued for the customer of the current session.
+
+        The queue is emptied by this call. It is a separate endpoint on purpose:
+        only a caller that actually shows the messages should consume them. Attached
+        to the basket views, a mini cart rendering the basket first would swallow them.
+
+        :returns: ``{"notifications": [...]}``, every entry in the shape of
+            :meth:`Error.as_json`, with the text for the customer in ``customer_message``.
+        """
+        session = self.session
+        queue = session.pop("notifications", []) if session is not None else []
+        if queue:
+            current.session.get().markChanged()
+        result = []
+        for entry in queue:
+            text = str(translate(
+                entry["message"]["key"],
+                defaultText=entry["message"]["default_text"],
+                default_variables=entry["message"]["variables"],
+            ))
+            result.append(Error(
+                code=entry["code"],
+                message=text,
+                customer_message=text,
+                details=entry["details"],
+            ).as_json())
+        return JsonResponse({"notifications": result})
 
     # --- Internal helpers  ----------------------------------------------------
 

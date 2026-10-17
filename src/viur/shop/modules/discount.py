@@ -7,6 +7,7 @@ import cachetools
 
 from viur import toolkit
 from viur.core import current, db, errors
+from viur.core.i18n import translate
 from viur.core.prototypes import List
 from viur.core.skeleton import SkeletonInstance
 from viur.shop import DEBUG_DISCOUNTS
@@ -354,7 +355,20 @@ class Discount(ShopModuleAbstract, List):
         request_data["shop_basket_revalidated"] = True
         if (cart_key := self.shop.cart.current_session_cart_key) is None:
             return []
-        return self.revalidate_cart(cart_key)
+        dropped_discounts = self.revalidate_cart(cart_key)
+        # Unlike the checkout, the basket has no error channel: the customer would only
+        # see a higher total. Queue a message for whoever shows the basket.
+        for discount_skel in dropped_discounts:
+            self.shop.api.add_notification(
+                "discount.no_longer_valid",
+                translate(
+                    "viur.shop.error.discount.no_longer_valid",
+                    default_variables={"name": discount_skel["name"]},
+                ),
+                discount_key=str(discount_skel["key"]),
+                discount_name=discount_skel["name"],
+            )
+        return dropped_discounts
 
     def is_still_applicable(
         self,
